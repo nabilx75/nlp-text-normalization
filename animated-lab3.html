@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cleanup, in motion — NLP Lab 3</title><meta name="description" content="Normalization makes different spellings look the same. Every cleanup also throws something away, so let’s watch each step and ask what it costs.">
+<style>:root{--paper:#f5f3ec;--ink:#213c34;--muted:#64726a;--line:#d9ded3;--green:#16654d;--lime:#d7ee97;--orange:#d06b39;--red:#9a4540;--white:#fffef8;--mono:'DejaVu Sans Mono','Courier New',monospace;--serif:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;--sans:'Trebuchet MS',Verdana,sans-serif}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
+button,input,select{font:inherit}
+button,a,select,input{touch-action:manipulation}
+a{color:var(--green);text-underline-offset:4px}
+button{cursor:pointer}
+button:disabled{cursor:default;opacity:.45}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--orange);outline-offset:4px}
+button{border:1px solid var(--line);border-radius:8px;background:var(--white);padding:9px 15px;color:var(--ink)}
+button:hover:not(:disabled){border-color:var(--green);background:#edf3e5}
+code,pre{font-family:var(--mono)}
+code{font-size:.88em}
+p{margin:0 0 16px}
+h1,h2,h3{line-height:1.14;font-weight:400;font-family:var(--serif)}
+h1{font-size:clamp(42px,5.7vw,79px);letter-spacing:-3px;margin:20px 0 24px}
+h2{font-size:clamp(30px,4vw,47px);letter-spacing:-1.4px;margin:10px 0 17px}
+h3{font-size:24px;margin:0 0 15px}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:bold}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:22px 4vw;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--serif);font-size:25px;text-decoration:none}
+.brand span{font-family:var(--mono);color:var(--orange)}
+.topbar .links{display:flex;gap:24px;font-size:12px}
+.layout{display:grid;grid-template-columns:225px minmax(0,1fr);max-width:1510px;margin:auto}
+.sidebar{position:sticky;top:0;align-self:start;height:100vh;padding:40px 20px 30px 26px;border-right:1px solid var(--line);overflow:auto}
+.sidebar .eyebrow{color:var(--muted);margin-bottom:22px}
+.sidebar a{display:flex;gap:12px;padding:11px 10px;text-decoration:none;font-size:13px;border-radius:6px;margin-bottom:4px}
+.sidebar a:hover,.sidebar a.active{background:#e3e9d9;color:var(--green)}
+.sidebar a.active{box-shadow:inset 3px 0 var(--green)}
+.sidebar .num{font-family:var(--mono);opacity:.55}
+.side-note{margin:26px 10px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:24px}
+main{min-width:0;padding:0 5vw 70px}
+.hero{padding:68px 0 52px;border-bottom:1px solid var(--line);position:relative}
+.hero .intro{max-width:630px;font-size:18px;color:var(--muted)}
+.hero .accent{color:var(--green);font-style:italic}
+.hero-bottom{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:32px}
+.primary{background:var(--green);color:white;border-color:var(--green)}
+.primary:hover:not(:disabled){background:#104f3c;color:white}
+.meta{color:var(--muted);font-size:12px}
+.email-card{margin-top:45px;background:var(--white);border:1px solid var(--line);padding:25px 28px;border-radius:13px}
+.email-address{font:clamp(19px,3vw,33px)/1.6 var(--mono);display:flex;flex-wrap:wrap;margin:14px 0}
+.email-address span{border-bottom:3px solid var(--line);padding:0 2px}
+.email-address .local{border-color:#7db29a}
+.email-address .domain{border-color:#d6ba73}
+.email-address .tld{border-color:var(--orange);color:var(--orange);background:#fae8d7}
+.email-card p{font-size:14px;margin-bottom:6px}
+.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.lesson{padding:58px 0 0;scroll-margin-top:20px}
+.lesson-head{display:flex;gap:20px;align-items:baseline}
+.lesson-num{color:var(--orange);font-family:var(--mono);font-size:14px}
+.lesson-desc{max-width:700px;color:var(--muted)}
+.demo-nav{display:flex;flex-wrap:wrap;gap:7px;margin:26px 0 16px}
+.demo-nav button{font-size:12px;padding:8px 11px;border-radius:22px}
+.demo-nav button[aria-pressed=true]{background:var(--ink);color:white;border-color:var(--ink)}
+.workbench{border:1px solid #cdd6c7;border-radius:13px;background:var(--white);overflow:hidden;box-shadow:0 5px 0 #e4e6db}
+.bench-top{background:#edf1e6;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:16px 24px;border-bottom:1px solid var(--line)}
+.bench-title{font-weight:bold;font-size:13px}
+.bench-tag{color:var(--muted);font-size:11px}
+.pattern-wrap{padding:22px 24px 14px;border-bottom:1px solid var(--line)}
+.tiny-label{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-bottom:11px;font-weight:bold}
+.pattern-pieces{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.piece{font-family:var(--mono);font-size:15px;padding:7px 10px;background:#f0f2ea;border-color:transparent;border-radius:5px}
+.piece.active{background:var(--lime);border-color:#a4c15e}
+.piece:hover{background:#e0e9d2}
+.pattern-hint{font-size:12px;color:var(--muted);margin-top:12px}
+.theater{padding:24px 24px 12px;position:relative}
+.tape{display:flex;flex-wrap:wrap;gap:3px;min-height:72px;align-content:flex-start;margin-bottom:24px}
+.char{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:33px;border-radius:4px;color:var(--ink);background:#f1f1e9;font:15px var(--mono);transition:background .25s,transform .25s,color .25s}
+.char.space{width:13px;background:transparent}
+.char.selected{background:var(--lime);box-shadow:inset 0 -2px #93b354;transform:translateY(-3px)}
+.char.boundary::before{content:'';position:absolute;left:-3px;top:-4px;bottom:-4px;border-left:2px dashed var(--orange)}
+.char.rejected{background:#f6ddcf;color:var(--red)}
+.char.dim{opacity:.35}
+.stage-guide{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin:2px 0 13px}
+.stage-guide::before{content:'↓';color:var(--green);font-size:20px}
+.result-tray{display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;min-height:58px;padding:15px;border:1px dashed #b7c7ad;border-radius:8px;background:#f7f9f0}
+.result-chip{font:13px/1.5 var(--mono);padding:5px 10px;background:var(--green);color:#fff;border-radius:5px;overflow-wrap:anywhere;max-width:100%}
+.result-chip.invalid{background:var(--red)}
+.empty-result{font-size:12px;color:var(--muted)}
+.flight{position:fixed;pointer-events:none;z-index:20;font:14px var(--mono);background:var(--green);color:white;padding:8px 13px;border-radius:5px;box-shadow:0 8px 25px #193b3430}
+.explanation{padding:22px 24px;min-height:133px;border-bottom:1px solid var(--line)}
+.explanation h3{font-family:var(--sans);font-size:16px;font-weight:bold;margin:0 0 8px;letter-spacing:0}
+.explanation p{font-size:14px;margin:0;color:var(--muted);max-width:760px}
+.code-panel{padding:20px 24px;background:#223d34;color:#e7eee0;overflow:auto}
+.code-line{font:12px/1.9 var(--mono);white-space:pre;min-width:max-content;padding:2px 10px;border-left:2px solid transparent}
+.code-line.current{background:#ffffff12;border-left-color:var(--lime);color:var(--lime)}
+.code-number{display:inline-block;width:24px;color:#a3b5a2;user-select:none}
+.controls{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:17px 24px;border-top:1px solid var(--line)}
+.controls-left{display:flex;gap:8px;flex-wrap:wrap}
+.controls button{font-size:12px;min-width:70px}
+.step-counter{font:11px var(--mono);color:var(--muted)}
+.speed{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+select{border:1px solid var(--line);background:var(--white);border-radius:5px;padding:5px;color:var(--ink)}
+.step-range{width:100%;accent-color:var(--green);margin:0}
+.range-row{padding:0 24px 18px}
+.output-box{border-top:1px solid var(--line);padding:18px 24px;background:#f9faf4}
+.output-box pre{margin:0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.output-box .tiny-label{margin-bottom:8px}
+.explain-details{margin:23px 0;border:1px solid var(--line);border-radius:8px;padding:16px 20px}
+.explain-details summary{cursor:pointer;font-size:14px;font-weight:bold}
+.explain-details p{font-size:13px;color:var(--muted);margin:14px 0 0}
+.quiz{margin:23px 0 0;padding:24px;background:#eaf0e1;border-radius:10px}
+.quiz .eyebrow{color:var(--green)}
+.quiz h3{font:18px/1.5 var(--serif);margin:8px 0 16px}
+.quiz-options{display:flex;flex-wrap:wrap;gap:9px}
+.quiz-options button{font-family:var(--mono);font-size:13px;min-width:90px}
+.quiz-options button.correct{background:var(--green);color:white}
+.quiz-options button.incorrect{background:#f5ddd0;border-color:var(--red)}
+.quiz-feedback{margin:13px 0 0;min-height:24px;font-size:13px}
+.source-row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:16px;padding-bottom:38px;border-bottom:1px solid var(--line)}
+.finish{padding:55px 0 0}
+.finish p{max-width:660px}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap;margin:25px 0}
+.reference-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.ref-card{background:var(--white);padding:24px;border:1px solid var(--line);border-radius:9px}
+.ref-card p{font-size:13px}
+.ref-card pre{font-size:12px;white-space:pre-wrap}
+.ref-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+.ref-table td,.ref-table th{padding:12px 15px;text-align:left;border-bottom:1px solid var(--line)}
+.ref-table th{background:#e9eedf}
+.print-note{display:none}
+.skip{position:absolute;left:10px;top:-100px;background:var(--white);padding:10px;z-index:99}
+.skip:focus{top:10px}
+
+@media(min-width:1500px){main{padding-left:80px;padding-right:80px}
+}
+
+@media(max-width:1000px){.layout{grid-template-columns:175px minmax(0,1fr)}
+.sidebar{padding:30px 10px}
+.sidebar a{font-size:11px;gap:8px}
+main{padding-left:4vw;padding-right:4vw}
+.char{width:20px;height:29px;font-size:13px}
+.hero{padding-top:45px}
+.bench-tag{display:none}
+}
+
+@media(max-width:700px){.layout{display:block}
+.sidebar{position:relative;height:auto;padding:13px 15px;border-right:0;border-bottom:1px solid var(--line)}
+.sidebar .eyebrow,.side-note{display:none}
+.sidebar nav{display:flex;overflow:auto;gap:5px}
+.sidebar a{white-space:nowrap;margin:0;font-size:12px;padding:8px}
+.sidebar a.active{box-shadow:inset 0 -2px var(--green)}
+main{padding:0 18px 45px}
+.topbar{padding:17px 20px}
+.topbar .links{gap:12px;font-size:11px}
+.brand{font-size:22px}
+.hero{padding:38px 0 35px}
+h1{letter-spacing:-1.7px}
+.hero .intro{font-size:16px}
+.email-card{padding:18px}
+.lesson{padding-top:38px}
+.bench-top,.pattern-wrap,.theater,.explanation,.code-panel,.controls,.output-box{padding-left:16px;padding-right:16px}
+.char{width:19px;height:28px;font-size:12px}
+.char.space{width:8px}
+.piece{font-size:13px;padding:7px 8px}
+.explanation{min-height:145px}
+.controls-left{gap:5px}
+.controls button{min-width:55px;padding:8px}
+.speed{margin-left:auto}
+.reference-grid{grid-template-columns:1fr}
+.quiz{padding:18px}
+.code-line{font-size:11px}
+.lesson-head{gap:13px}
+}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}
+*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+@media print{body{background:white;font-size:11pt}
+.topbar,.sidebar,.controls,.range-row,.demo-nav,.quiz,.skip,.hero-bottom{display:none}
+.layout{display:block}
+main{padding:0}
+.hero{padding:0 0 20px}
+h1{font-size:32pt}
+h2{font-size:23pt}
+.lesson{padding-top:24px}
+.workbench,.ref-card,.email-card{box-shadow:none;break-inside:avoid}
+.code-panel{background:#f1f1f1;color:black}
+.code-line.current{color:black}
+.char{color:black}
+.print-note{display:block}
+.source-row{padding-bottom:12px}
+a{color:black}
+.reference-grid{grid-template-columns:1fr 1fr}
+}
+
+.tape[dir=rtl]{justify-content:flex-start}
+</style></head>
+<body><a class="skip" href="#chapters">Skip to the exercises</a>
+<header class="topbar"><a class="brand" href="#top">little <span>cleanups.</span></a><div class="links"><a href="animated-lab.html">Lab 1 walkthrough</a><a href="animated-lab2.html">Lab 2 walkthrough</a></div></header>
+<div class="layout"><aside class="sidebar"><div class="eyebrow">NLP Lab 03 · the walkthrough</div><nav><a href="#exercise-01"><span class="num">01</span>Lowercase. And its limits.</a><a href="#exercise-02"><span class="num">02</span>Clean up the whitespace.</a><a href="#exercise-03"><span class="num">03</span>Handle the numbers.</a><a href="#exercise-04"><span class="num">04</span>Build a cleaning pipeline.</a><a href="#exercise-05"><span class="num">05</span>Decide: keep, remove or normalize?.</a></nav><div class="side-note">One small idea at a time.<br><br>Pick an example.<br>Press Play.<br>Use Next to slow it down.<br><br>Come back tomorrow and predict a result from memory.</div></aside>
+<main id="top"><section class="hero"><div class="eyebrow">A gentle guide to your third NLP lab</div><h1>Clean the text.<br><span class="accent">Watch what changes.</span></h1><p class="intro">Normalization makes different spellings look the same. Every cleanup also throws something away, so let’s watch each step and ask what it costs.</p>
+<div class="hero-bottom"><a class="primary" style="padding:12px 20px;border-radius:7px;text-decoration:none" href="#exercise-01">Start with lowercasing →</a><span class="meta">5 lessons · every output is real Python · no installation</span></div>
+<div class="email-card"><div class="eyebrow">Many spellings, one form</div><div class="email-address"><span class="local">Hello</span><span class=""> · </span><span class="domain">HELLO</span><span class=""> → </span><span class="tld">hello</span></div><div class="legend"><span>variants merged</span><span>vocabulary shrinks</span><span>some information lost</span></div><p style="margin-top:18px">Normalization is a trade-off: smaller vocabulary versus lost detail. The task decides.</p></div><p class="meta" style="margin-top:24px">These are guided visual explanations, not a live debugger. Outputs were generated by running the code with Python and NLTK. Each example is a short lesson, so you do not need to read the page at once.</p></section>
+<div id="chapters"></div><noscript><p>This walkthrough needs JavaScript for the animation.</p></noscript>
+<section class="finish"><div class="eyebrow">Make it stick</div><h2>Now explain one aloud.</h2><p>Pick one lesson. Say what the cleanup keeps and what it destroys, then press Play to check. For each step, name a task where the opposite choice is right.</p><div class="footer-links"><a href="animated-lab2.html">Lab 2 walkthrough →</a><a href="#top">Back to the beginning ↑</a></div></section></main></div>
+<script type="application/json" id="course-data">[{"number": "01", "id": "exercise-01", "title": "Lowercase. And its limits.", "intro": "Lowercasing merges Hello, HELLO and hello. It also merges things that should stay different.", "demos": [{"name": "Apple vs apple", "tokens": [["s.lower()", "Every capital becomes lowercase."]], "code": ["s = 'Apple released a new iPhone; the apple I ate was sweet.'", "low = s.lower()", "print(low)", "print(low.split().count('apple'))"], "frames": [{"text": "Apple released a new iPhone; the apple I ate was sweet.", "title": "1. Two different things", "note": "The first Apple is a company, the second apple is a fruit.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "Apple released a new iPhone; the apple I ate was sweet.", "title": "The company", "note": "Capital A is a clue that this is a name.", "spans": [[0, 5]], "results": [], "token": null, "line": 0}, {"text": "Apple released a new iPhone; the apple I ate was sweet.", "title": "The fruit", "note": "Lowercase apple is the fruit.", "spans": [[33, 38]], "results": [], "token": null, "line": 0}, {"text": "apple released a new iphone; the apple i ate was sweet.", "title": "After lower()", "note": "Both are now exactly 'apple'. The system cannot tell them apart.", "spans": [[0, 5], [33, 38]], "results": ["apple", "apple"], "token": 0, "line": 1, "invalid": true}], "output": "apple released a new iphone; the apple i ate was sweet.\n2"}, {"name": "smart_lower", "tokens": [["isupper() and 2 <= len <= 5", "The acronym heuristic."]], "code": ["def smart_lower(text):", "    def fix(match):", "        word = match.group()", "        if word.isupper() and 2 <= len(word) <= 5:", "            return word", "        return word.lower()", "    return re.sub(r'[A-Za-z]+', fix, text)"], "frames": [{"text": "The NLP course covers USA-based case studies.", "title": "1. Find each word", "note": "smart_lower looks at every run of letters.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "The NLP course covers USA-based case studies.", "title": "The", "note": "Ordinary word: lowercase it.", "spans": [[0, 3]], "results": ["the"], "token": 0, "line": 3, "boundaries": []}, {"text": "The NLP course covers USA-based case studies.", "title": "NLP", "note": "Fully capital, 2 to 5 letters: looks like an acronym, keep it.", "spans": [[4, 7]], "results": ["the", "NLP"], "token": 0, "line": 3, "boundaries": [4]}, {"text": "The NLP course covers USA-based case studies.", "title": "USA", "note": "Fully capital, 2 to 5 letters: looks like an acronym, keep it.", "spans": [[22, 25]], "results": ["the", "NLP", "course", "covers", "USA"], "token": 0, "line": 3, "boundaries": [22]}, {"text": "The NLP course covers USA-based case studies.", "title": "based", "note": "Ordinary word: lowercase it.", "spans": [[26, 31]], "results": ["the", "NLP", "course", "covers", "USA", "based"], "token": 0, "line": 3, "boundaries": []}, {"text": "the NLP course covers USA-based case studies.", "title": "Result", "note": "The acronyms NLP and USA survive.", "spans": [], "results": ["the", "NLP", "course", "covers", "USA", "based", "case", "studies"], "token": null, "line": 4}], "output": "the NLP course covers USA-based case studies."}, {"name": "Where it fails", "tokens": [["The heuristic", "It only looks at the shape of the word."]], "code": ["print(smart_lower('WOW, I love this! UNESCO and NASA agree.'))"], "frames": [{"text": "WOW, I love this! UNESCO and NASA agree.", "title": "1. Input", "note": "Which words should it keep?", "spans": [], "results": [], "token": null, "line": 0}, {"text": "WOW, I love this! UNESCO and NASA agree.", "title": "WOW is kept", "note": "Shouting, not an acronym.", "spans": [], "results": [], "token": null, "line": 0, "reject": [[0, 3]]}, {"text": "WOW, I love this! UNESCO and NASA agree.", "title": "I becomes i", "note": "One letter is outside the 2 to 5 rule.", "spans": [], "results": [], "token": null, "line": 0, "reject": [[5, 6]]}, {"text": "WOW, I love this! UNESCO and NASA agree.", "title": "UNESCO is lowercased", "note": "Six letters: too long for the rule.", "spans": [], "results": [], "token": null, "line": 0, "reject": [[18, 24]]}, {"text": "WOW, i love this! unesco and NASA agree.", "title": "Result", "note": "Three mistakes in one sentence.", "spans": [], "results": ["WOW, i love this! unesco and NASA agree."], "token": null, "line": 0, "invalid": true}], "output": "WOW, i love this! unesco and NASA agree."}], "explain": ["lower() shrinks the vocabulary and helps search and bag-of-words models, but Apple (company) and apple (fruit) become identical. That hurts Named Entity Recognition.", "smart_lower keeps 2 to 5 letter all-caps words. It fails on shouted words, 6-letter acronyms like UNESCO, and the pronoun I."], "quiz": {"question": "After lower(), can a system tell Apple from apple?", "options": ["Yes", "No"], "answer": 1, "feedback": "Both are 'apple', so the case clue is gone."}, "source": "https://docs.python.org/3/library/stdtypes.html#str.lower", "reference": ""}, {"number": "02", "id": "exercise-02", "title": "Clean up the whitespace.", "intro": "Text copied from PDFs and web pages hides tabs, line breaks and strange spaces.", "demos": [{"name": "One regex, all spaces", "tokens": [["\\s+", "One or more whitespace characters of any kind."], [".strip()", "Remove the ends."]], "code": ["messy = 'NLP\\tis\\n\\nvery\\u00a0\\u00a0useful. '", "cleaned = re.sub(r'\\s+', ' ', messy)", "cleaned = cleaned.strip()", "print(repr(cleaned))"], "frames": [{"text": "NLP→is¶¶very⍽⍽useful. ", "title": "1. Messy text", "note": "→ is a tab, ¶ a line break, ⍽ a non-breaking space, · a space.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "NLP→is¶¶very⍽⍽useful. ", "title": "Tab", "note": "\\s matches the tab.", "spans": [[3, 4]], "results": [], "token": 0, "line": 1}, {"text": "NLP→is¶¶very⍽⍽useful. ", "title": "Two line breaks", "note": "A run of whitespace is one match.", "spans": [[6, 8]], "results": [], "token": 0, "line": 1}, {"text": "NLP→is¶¶very⍽⍽useful. ", "title": "Non-breaking spaces", "note": "Python 3 text patterns match them with \\s.", "spans": [[12, 14]], "results": [], "token": 0, "line": 1}, {"text": "NLP→is¶¶very⍽⍽useful. ", "title": "Trailing space", "note": "Also matched.", "spans": [[21, 22]], "results": [], "token": 0, "line": 1}, {"text": "NLP is very useful. ", "title": "After re.sub", "note": "Each run became one normal space.", "spans": [], "results": ["'NLP is very useful. '"], "token": 0, "line": 1}, {"text": "NLP is very useful.", "title": "After strip()", "note": "The end space is gone.", "spans": [], "results": ["'NLP is very useful.'"], "token": 1, "line": 2}], "output": "'NLP is very useful.'"}, {"name": "The invisible trap", "tokens": [["\\s", "Does not match zero-width space."], ["replace('\\u200b', '')", "Remove it explicitly."]], "code": ["z = 'a\\u200bb'", "print(repr(re.sub(r'\\s+', ' ', z)))", "print(repr(z.replace('\\u200b', '')))"], "frames": [{"text": "a∅b", "title": "1. A zero-width space", "note": "∅ marks an invisible character between a and b.", "spans": [[1, 2]], "results": [], "token": null, "line": 0}, {"text": "a∅b", "title": "\\s does not see it", "note": "re.sub leaves it in place.", "spans": [], "results": ["'a\\u200bb'"], "token": 0, "line": 1, "invalid": true}, {"text": "ab", "title": "Replace it directly", "note": "z.replace('\\u200b', '') removes it.", "spans": [], "results": ["'ab'"], "token": 1, "line": 2}], "output": "'a\\u200bb'\n'ab'"}], "explain": ["re.sub(r'\\s+', ' ', text).strip() turns any run of whitespace into one space. In Python 3, \\s also matches the non-breaking space.", "The zero-width space is NOT matched by \\s, so it must be removed separately. Careful: collapsing whitespace destroys meaningful layout in poetry and source code."], "quiz": {"question": "Does \\s+ remove a zero-width space?", "options": ["Yes", "No"], "answer": 1, "feedback": "No. It is invisible and needs its own replace()."}, "source": "https://docs.python.org/3/library/re.html", "reference": ""}, {"number": "03", "id": "exercise-03", "title": "Handle the numbers.", "intro": "Replace numbers to shrink the vocabulary, or keep them when the exact value matters.", "demos": [{"name": "\\d+ breaks amounts", "tokens": [["\\d+", "One or more digits. Stops at , and ."]], "code": ["invoice = 'The invoice #4521 totals $1,250.00, due in 30 days.'", "print(re.findall(r'\\d+', invoice))"], "frames": [{"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "1. An invoice sentence", "note": "One amount, one id, one number of days.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 1: 4521", "note": "Fine.", "spans": [[13, 17]], "results": ["4521"], "token": 0, "line": 1, "invalid": false}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 2: 1", "note": "Only a piece of $1,250.00.", "spans": [[16, 17]], "results": ["4521", "1"], "token": 0, "line": 1, "invalid": true}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 3: 250", "note": "Only a piece of $1,250.00.", "spans": [[28, 31]], "results": ["4521", "1", "250"], "token": 0, "line": 1, "invalid": true}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 4: 00", "note": "Only a piece of $1,250.00.", "spans": [[32, 34]], "results": ["4521", "1", "250", "00"], "token": 0, "line": 1, "invalid": true}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 5: 30", "note": "Fine.", "spans": [[43, 45]], "results": ["4521", "1", "250", "00", "30"], "token": 0, "line": 1, "invalid": false}], "output": "['4521', '1', '250', '00', '30']"}, {"name": "Numbers with commas", "tokens": [["\\d+", "First digits."], ["(?:,\\d{3})*", "Groups: comma + 3 digits."], ["(?:\\.\\d+)?", "Optional decimals."]], "code": ["NUMBER = r'\\d+(?:,\\d{3})*(?:\\.\\d+)?'", "print(re.findall(NUMBER, invoice))"], "frames": [{"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "1. Same sentence", "note": "Now with a smarter pattern.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 1: 4521", "note": "One whole number.", "spans": [[13, 17]], "results": ["4521"], "token": 0, "line": 1}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 2: 1,250.00", "note": "One whole number.", "spans": [[26, 34]], "results": ["4521", "1,250.00"], "token": 0, "line": 1}, {"text": "The invoice #4521 totals $1,250.00, due in 30 days.", "title": "Match 3: 30", "note": "One whole number.", "spans": [[43, 45]], "results": ["4521", "1,250.00", "30"], "token": 0, "line": 1}], "output": "['4521', '1,250.00', '30']"}, {"name": "<NUM> or magnitude?", "tokens": [["<NUM>", "Generic placeholder."], ["<NUM_SMALL> / <NUM_LARGE>", "Keeps a coarse size."]], "code": ["generic = re.sub(NUMBER, '<NUM>', text)", "magnitude = re.sub(NUMBER, repl, text)  # <100 small"], "frames": [{"text": "Invoice A: $1,250.00 | Invoice B: $12.50", "title": "1. Two invoices", "note": "Very different amounts.", "spans": [[12, 20], [35, 40]], "results": [], "token": null, "line": 0}, {"text": "Invoice A: $<NUM> | Invoice B: $<NUM>", "title": "Generic <NUM>", "note": "Both invoices now look identical.", "spans": [], "results": ["A: <NUM>", "B: <NUM>"], "token": 0, "line": 0, "invalid": true}, {"text": "Invoice A: $<NUM_LARGE> | Invoice B: $<NUM_SMALL>", "title": "Magnitude version", "note": "LARGE vs SMALL keeps a trace of the amount.", "spans": [], "results": ["A: <NUM_LARGE>", "B: <NUM_SMALL>"], "token": 1, "line": 1}], "output": "Invoice A: $<NUM> | Invoice B: $<NUM>\nInvoice A: $<NUM_LARGE> | Invoice B: $<NUM_SMALL>"}], "explain": ["\\d+ splits $1,250.00 into three numbers. Adding (?:,\\d{3})* and (?:\\.\\d+)? keeps it whole.", "A generic <NUM> loses all size information. Magnitude buckets keep some. For financial, medical or legal text, keep the real value."], "quiz": {"question": "How many numbers does \\d+ find in $1,250.00?", "options": ["1", "3", "2"], "answer": 1, "feedback": "1, 250 and 00."}, "source": "https://docs.python.org/3/library/re.html", "reference": ""}, {"number": "04", "id": "exercise-04", "title": "Build a cleaning pipeline.", "intro": "Combine small steps into one function. The order of the steps matters.", "demos": [{"name": "clean_text, step by step", "tokens": [["lower", ""], ["URL / email", ""], ["repeats", ""]], "code": ["def clean_text(text):", "    text = text.lower()", "    text = re.sub(URL, ' <URL> ', text)", "    text = re.sub(EMAIL, ' <EMAIL> ', text)", "    text = re.sub(r'([a-z])\\1{2,}', r'\\1\\1', text)", "    text = re.sub(r'\\s+', ' ', text).strip()", "    return text"], "frames": [{"text": "OMG this courseeee is SOOOO good!!! 10/10 would recommend :) Visit https://univ.dz/nlp for more info. Contact: prof@univ.dz", "title": "1. The raw comment", "note": "Capitals, stretched words, a link and an email.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "OMG this courseeee is SOOOO good!!! 10/10 would recommend :) Visit https://univ.dz/nlp for more info. Contact: prof@univ.dz", "title": "1. Lowercase", "note": "These parts will change.", "spans": [[0, 3], [22, 27], [61, 62], [102, 103]], "results": [], "token": 0, "line": 1}, {"text": "omg this courseeee is soooo good!!! 10/10 would recommend :) visit https://univ.dz/nlp for more info. contact: prof@univ.dz", "title": "1. Lowercase (done)", "note": "The text after this step.", "spans": [], "results": ["Lowercase"], "token": 0, "line": 1}, {"text": "omg this courseeee is soooo good!!! 10/10 would recommend :) visit https://univ.dz/nlp for more info. contact: prof@univ.dz", "title": "2. Mask the URL", "note": "These parts will change.", "spans": [[67, 86]], "results": ["Lowercase"], "token": 0, "line": 2}, {"text": "omg this courseeee is soooo good!!! 10/10 would recommend :) visit  <URL>  for more info. contact: prof@univ.dz", "title": "2. Mask the URL (done)", "note": "The text after this step.", "spans": [], "results": ["Lowercase", "Mask the URL"], "token": 0, "line": 2}, {"text": "omg this courseeee is soooo good!!! 10/10 would recommend :) visit  <URL>  for more info. contact: prof@univ.dz", "title": "3. Mask the email", "note": "These parts will change.", "spans": [[99, 111]], "results": ["Lowercase", "Mask the URL"], "token": 0, "line": 3}, {"text": "omg this courseeee is soooo good!!! 10/10 would recommend :) visit  <URL>  for more info. contact:  <EMAIL> ", "title": "3. Mask the email (done)", "note": "The text after this step.", "spans": [], "results": ["Lowercase", "Mask the URL", "Mask the email"], "token": 0, "line": 3}, {"text": "omg this courseeee is soooo good!!! 10/10 would recommend :) visit  <URL>  for more info. contact:  <EMAIL> ", "title": "4. Collapse repeats", "note": "These parts will change.", "spans": [[14, 18], [23, 27]], "results": ["Lowercase", "Mask the URL", "Mask the email"], "token": 0, "line": 4}, {"text": "omg this coursee is soo good!!! 10/10 would recommend :) visit  <URL>  for more info. contact:  <EMAIL> ", "title": "4. Collapse repeats (done)", "note": "The text after this step.", "spans": [], "results": ["Lowercase", "Mask the URL", "Mask the email", "Collapse repeats"], "token": 0, "line": 4}, {"text": "omg this coursee is soo good!!! 10/10 would recommend :) visit  <URL>  for more info. contact:  <EMAIL> ", "title": "5. Fix whitespace", "note": "These parts will change.", "spans": [[62, 64], [69, 71], [94, 96]], "results": ["Lowercase", "Mask the URL", "Mask the email", "Collapse repeats"], "token": 0, "line": 5}, {"text": "omg this coursee is soo good!!! 10/10 would recommend :) visit <URL> for more info. contact: <EMAIL>", "title": "5. Fix whitespace (done)", "note": "The text after this step.", "spans": [], "results": ["Lowercase", "Mask the URL", "Mask the email", "Collapse repeats", "Fix whitespace"], "token": 0, "line": 5}, {"text": "omg this coursee is soo good!!! 10/10 would recommend :) visit <URL> for more info. contact: <EMAIL>", "title": "Final clean text", "note": "Order matters: URLs and emails are masked before touching punctuation.", "spans": [], "results": ["omg this coursee is soo good!!! 10/10 would recommend :) visit <URL> for more info. contact: <EMAIL>"], "token": null, "line": 6}], "output": "omg this coursee is soo good!!! 10/10 would recommend :) visit <URL> for more info. contact: <EMAIL>"}, {"name": "Repeated letters", "tokens": [["([a-z])\\1{2,}", "A letter repeated 3 or more times."], ["(.)\\1{2,}", "ANY character: too aggressive."]], "code": ["re.sub(r'([a-z])\\1{2,}', r'\\1\\1', text)", "re.sub(r'(.)\\1{2,}', r'\\1\\1', text)"], "frames": [{"text": "courseeee soooo good!!! 1000", "title": "1. Stretched text", "note": "We want coursee and soo.", "spans": [], "results": [], "token": null, "line": 0}, {"text": "courseeee soooo good!!! 1000", "title": "Letters only", "note": "The runs eeee and ooo are shortened to two letters.", "spans": [[5, 9], [11, 15]], "results": [], "token": 0, "line": 0}, {"text": "coursee soo good!!! 1000", "title": "Safe result", "note": "Digits and ! are untouched.", "spans": [], "results": ["coursee soo good!!! 1000"], "token": 0, "line": 0}, {"text": "courseeee soooo good!!! 1000", "title": "With (.) instead", "note": "This also hits !!! and 000.", "spans": [[20, 23], [25, 28]], "results": [], "token": 1, "line": 1, "reject": [[20, 23], [25, 28]]}, {"text": "coursee soo good!! 100", "title": "Damaged result", "note": "1000 became 100 and !!! became !!.", "spans": [], "results": ["coursee soo good!! 100"], "token": 1, "line": 1, "invalid": true}], "output": "courseeee soooo good!!! 1000\ncourseeee soooo good!!! 1000"}], "explain": ["clean_text lowercases, masks the URL and the email, shortens stretched letters and fixes the whitespace, in that order.", "For sentiment analysis, do not delete !!! and stretched letters: they express intensity. Collapse to two letters instead."], "quiz": {"question": "Why are URLs masked before collapsing repeated letters?", "options": ["The URL would be damaged", "It is faster", "Order never matters"], "answer": 0, "feedback": "Repeats and punctuation rules could corrupt the link, so it is masked first."}, "source": "https://docs.python.org/3/library/re.html", "reference": ""}, {"number": "05", "id": "exercise-05", "title": "Decide: keep, remove or normalize?", "intro": "There is no universal answer. Each row asks what the final task needs.", "demos": [{"name": "Decision table", "tokens": [["Preserve / Normalize / Remove", "Choose per task."]], "code": ["Capital letters        Sentiment analysis       -> Normalize", "Numbers                Financial documents      -> Preserve", "Punctuation            Question answering       -> Preserve", "Line breaks and spaces Web-scraped corpus       -> Normalize", "Emojis                 Social-media sentiment   -> Preserve", "Repeated letters       Social-media sentiment   -> Normalize", "Accents                Multilingual search      -> Normalize"], "frames": [{"text": "This film is TERRIBLE!", "title": "Capital letters · Sentiment analysis", "note": "Lowercase to merge variants, but keep an ALL-CAPS flag. Opposite: NER needs case.", "spans": [[13, 21]], "results": ["Normalize"], "token": 0, "line": 0}, {"text": "Invoice total: $1,250.00", "title": "Numbers · Financial documents", "note": "Exact values matter. Opposite: document-type classification can use <NUM>.", "spans": [[15, 24]], "results": ["Preserve"], "token": 0, "line": 1}, {"text": "Where is the library?", "title": "Punctuation · Question answering", "note": "The ? signals a question. Opposite: bag-of-words topic models can drop it.", "spans": [[20, 21]], "results": ["Preserve"], "token": 0, "line": 2}, {"text": "Title¶¶¶···Some···text", "title": "Line breaks and spaces · Web-scraped corpus", "note": "It is layout noise. Opposite: poetry and code need their line breaks.", "spans": [[5, 11]], "results": ["Normalize"], "token": 0, "line": 3}, {"text": "Great course 😀", "title": "Emojis · Social-media sentiment", "note": "A strong sentiment signal. Opposite: formal news text can drop them.", "spans": [[13, 14]], "results": ["Preserve"], "token": 0, "line": 4}, {"text": "soooo good", "title": "Repeated letters · Social-media sentiment", "note": "Collapse to two letters to keep the emphasis. Opposite: search engines collapse to one.", "spans": [[1, 5]], "results": ["Normalize"], "token": 0, "line": 5}, {"text": "naïve café", "title": "Accents · Multilingual search", "note": "Strip accents so cafe matches café. Opposite: côté vs cote differ in French.", "spans": [[2, 3]], "results": ["Normalize"], "token": 0, "line": 6}], "output": "Capital letters: Normalize\nNumbers: Preserve\nPunctuation: Preserve\nLine breaks and spaces: Normalize\nEmojis: Preserve\nRepeated letters: Normalize\nAccents: Normalize"}], "explain": ["Always justify with the task. Preserve what carries meaning for it; normalize what is only variation; remove what is noise.", "For each row there is a situation where the opposite choice is right. Name it when you explain."], "quiz": {"question": "Capital letters in sentiment analysis: what is the usual choice?", "options": ["Normalize, keeping an ALL-CAPS flag", "Always preserve", "Always remove letters"], "answer": 0, "feedback": "Lowercase to merge variants, but shouting carries intensity."}, "source": "https://docs.python.org/3/library/re.html", "reference": ""}]</script>
+<script>/* Guided Python traces: match positions and final outputs are generated with Python re. */
+(() => {
+  'use strict';
+  const course = JSON.parse(document.getElementById('course-data').textContent);
+  const root = document.getElementById('chapters');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const states = [];
+  function pause(state) {
+    clearTimeout(state.timer);
+    state.playing = false;
+    state.section.querySelector('[data-action="play"]').textContent = '▶ Play';
+  }
+  function getDemo(state) { return state.chapter.demos[state.demo]; }
+  function moveChip(state, value, span, target) {
+    if (reduced.matches || !span) return;
+    const first = state.section.querySelector(`.char[data-index="${span[0]}"]`);
+    if (!first) return;
+    const start = first.getBoundingClientRect(), end = target.getBoundingClientRect();
+    const flyer = document.createElement('div');
+    flyer.className = 'flight'; flyer.textContent = value;
+    flyer.style.left = start.left + 'px'; flyer.style.top = start.top + 'px';
+    document.body.append(flyer);
+    const animation = flyer.animate([
+      {transform:'translate(0,0)',opacity:1},
+      {transform:`translate(${end.left-start.left}px,${end.top-start.top}px)`,opacity:.85},
+      {transform:`translate(${end.left-start.left}px,${end.top-start.top}px)`,opacity:0}
+    ], {duration:650,easing:'cubic-bezier(.22,.7,.2,1)'});
+    animation.onfinish = () => flyer.remove();
+  }
+  function render(state, animate = false) {
+    const demo = getDemo(state), frame = demo.frames[state.step], section = state.section;
+    section.querySelector('.bench-title').textContent = demo.name;
+    section.querySelector('.pattern-pieces').innerHTML = demo.tokens.map((t,i) => `<button class="piece${frame.token===i?' active':''}" data-token="${i}" aria-pressed="${frame.token===i}" title="Explain this part">${esc(t[0])}</button>`).join('');
+    const tape = section.querySelector('.tape'); tape.dir = demo.dir || 'ltr';
+    if (state.tapeText !== frame.text) {
+      tape.replaceChildren();
+      // Array.from gives the right visual characters; Python offsets are code points too.
+      Array.from(frame.text).forEach((c,i) => {
+        const tile=document.createElement('span'); tile.dataset.index=i;
+        tile.className='char'+(c===' '?' space':''); tile.textContent=c===' '?'·':c;
+        tile.setAttribute('aria-hidden','true'); tape.append(tile);
+      });
+      tape.setAttribute('aria-label', frame.text); state.tapeText=frame.text;
+    }
+    tape.querySelectorAll('.char').forEach(tile => {
+      const i=Number(tile.dataset.index);
+      const selected = (frame.spans||[]).some(s=>i>=s[0]&&i<s[1]);
+      tile.classList.toggle('selected', selected);
+      if (animate && selected && !reduced.matches) {
+        const start = frame.spans.find(s=>i>=s[0]&&i<s[1])[0];
+        tile.animate([{transform:'translateY(0)',background:'#f1f1e9'},
+          {transform:'translateY(-7px)',background:'#d7ee97'},
+          {transform:'translateY(-3px)',background:'#d7ee97'}],
+          {duration:430,delay:Math.min((i-start)*55,650),easing:'ease-out'});
+      }
+      tile.classList.toggle('boundary', (frame.boundaries||[]).includes(i));
+      tile.classList.toggle('rejected', (frame.reject||[]).some(s=>i>=s[0]&&i<s[1]));
+    });
+    const tray=section.querySelector('.result-tray');
+    tray.innerHTML=frame.results.length?frame.results.map(v=>`<span class="result-chip${frame.invalid?' invalid':''}">${esc(v)}</span>`).join(''):'<span class="empty-result">'+esc(frame.empty||'The result will arrive here.')+'</span>';
+    if(animate&&frame.results.length>state.lastResults&&frame.spans.length){moveChip(state,frame.results.at(-1),frame.spans.at(-1),tray.lastElementChild);}
+    state.lastResults=frame.results.length;
+    section.querySelector('.explanation h3').textContent=frame.title;
+    section.querySelector('.explanation p').textContent=frame.note;
+    section.querySelector('.code-panel').innerHTML=demo.code.map((line,i)=>`<div class="code-line${frame.line===i?' current':''}"><span class="code-number">${i+1}</span>${esc(line)}</div>`).join('');
+    section.querySelector('.step-counter').textContent=`${state.step+1} / ${demo.frames.length}`;
+    section.querySelector('.step-range').max=demo.frames.length-1;
+    section.querySelector('.step-range').value=state.step;
+    section.querySelector('[data-action="back"]').disabled=state.step===0;
+    section.querySelector('[data-action="next"]').disabled=state.step===demo.frames.length-1;
+    section.querySelector('.output-box pre').textContent=demo.output;
+    section.querySelectorAll('[data-demo]').forEach(b=>b.setAttribute('aria-pressed', Number(b.dataset.demo)===state.demo));
+  }
+  function selectDemo(state, index) {
+    pause(state); state.demo=index; state.step=0; state.lastResults=0; state.tapeText=null; render(state);
+  }
+  function tick(state) {
+    if(!state.playing)return;
+    if(state.step>=getDemo(state).frames.length-1){pause(state);return;}
+    state.step++;render(state,true);
+    state.timer=setTimeout(()=>tick(state),state.speed);
+  }
+  course.forEach((chapter,index)=>{
+    const section=document.createElement('section');section.className='lesson';section.id=chapter.id;
+    section.innerHTML=`<div class="lesson-head"><span class="lesson-num">${esc(chapter.number)}</span><h2>${esc(chapter.title)}</h2></div>
+      <p class="lesson-desc">${esc(chapter.intro)}</p>
+      <div class="demo-nav" role="group" aria-label="Examples for ${esc(chapter.title)}">${chapter.demos.map((d,i)=>`<button data-demo="${i}" aria-pressed="${i===0}">${esc(d.name)}</button>`).join('')}</div>
+      <div class="workbench"><div class="bench-top"><span class="bench-title"></span><span class="bench-tag">INPUT → RULE → RESULT</span></div>
+      <div class="pattern-wrap"><div class="tiny-label">The rule · click a piece to explain it</div><div class="pattern-pieces"></div><div class="pattern-hint">Green = the part being used. Orange line = a boundary. Red = a part that is rejected or goes wrong.</div></div>
+      <div class="theater"><div class="tiny-label">Input text</div><div class="tape" role="img"></div><div class="stage-guide">Matched text moves into the result tray</div><div class="result-tray"></div></div>
+      <div class="explanation" aria-live="polite" aria-atomic="true"><h3></h3><p></p></div>
+      <div class="code-panel" aria-label="Python code"></div>
+      <div class="controls"><div class="controls-left"><button class="primary" data-action="play">▶ Play</button><button data-action="back">← Back</button><button data-action="next">Next →</button><button data-action="reset">↺ Reset</button></div><span class="step-counter"></span><label class="speed">Speed <select aria-label="Playback speed"><option value="2600">Slow</option><option value="1700" selected>Normal</option><option value="850">Fast</option></select></label></div>
+      <div class="range-row"><input class="step-range" type="range" min="0" value="0" aria-label="Walkthrough step"></div>
+      <div class="output-box"><div class="tiny-label">Actual Python output · use this to check your prediction</div><pre></pre></div></div>
+      <details class="explain-details"><summary>How to explain this exercise to your professor</summary>${chapter.explain.map(p=>`<p>${esc(p)}</p>`).join('')}</details>
+      <div class="quiz"><div class="eyebrow">Your turn · try from memory</div><h3>${esc(chapter.quiz.question)}</h3><div class="quiz-options">${chapter.quiz.options.map((v,i)=>`<button data-answer="${i}">${esc(v)}</button>`).join('')}</div><p class="quiz-feedback" aria-live="polite">Make a prediction before looking at the output.</p></div>
+      <div class="source-row"><span>Read: <a href="${chapter.source}" target="_blank" rel="noopener">Official documentation ↗</a></span><a href="#top">Back to the top ↑</a></div>`;
+    root.append(section);
+    const state={chapter,section,demo:0,step:0,lastResults:0,tapeText:null,playing:false,speed:1700,timer:null};states.push(state);
+    section.addEventListener('click',e=>{
+      const button=e.target.closest('button');if(!button)return;
+      if(button.hasAttribute('data-demo'))selectDemo(state,Number(button.dataset.demo));
+      if(button.hasAttribute('data-token')){
+        pause(state);const t=Number(button.dataset.token),frame=getDemo(state).frames.findIndex(f=>f.token===t);
+        if(frame>=0){state.step=frame;render(state,true);}
+      }
+      const action=button.dataset.action;
+      if(action==='play'){
+        if(state.playing)pause(state);
+        else{states.forEach(pause);if(state.step===getDemo(state).frames.length-1){state.step=0;state.lastResults=0;render(state);}state.playing=true;button.textContent='Ⅱ Pause';state.timer=setTimeout(()=>tick(state),state.speed);}
+      }
+      if(action==='next'||action==='back'){pause(state);state.step+=action==='next'?1:-1;render(state,true);}
+      if(action==='reset'){pause(state);state.step=0;state.lastResults=0;render(state);}
+      if(button.hasAttribute('data-answer')){
+        const correct=Number(button.dataset.answer)===chapter.quiz.answer;
+        section.querySelectorAll('[data-answer]').forEach(b=>b.classList.remove('correct','incorrect'));
+        button.classList.add(correct?'correct':'incorrect');
+        section.querySelector('.quiz-feedback').textContent=(correct?'Yes. ':'Try again. ')+chapter.quiz.feedback;
+      }
+    });
+    section.querySelector('.step-range').addEventListener('input',e=>{pause(state);state.step=Number(e.target.value);render(state);});
+    section.querySelector('select').addEventListener('change',e=>{state.speed=Number(e.target.value);});
+    render(state);
+  });
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)states.forEach(pause);});
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{if(entry.isIntersecting){document.querySelectorAll('.sidebar a').forEach(a=>a.classList.toggle('active',a.hash==='#'+entry.target.id));}});
+  },{rootMargin:'-10% 0px -65% 0px'});
+  states.forEach(state=>observer.observe(state.section));
+  // A tiny public handle makes the guided examples easy to verify in a browser.
+  window.regexCourse={course,states,selectDemo,render,pause};
+})();
+</script></body></html>
