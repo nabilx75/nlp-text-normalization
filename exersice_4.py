@@ -21,3 +21,5 @@ tok_before = word_tokenize(t)
 tok_after = word_tokenize(cleaned)
 print(len(tok_before), "tokens,", len(set(tok_before)), "distinct before")
 print(len(tok_after), "tokens,", len(set(tok_after)), "distinct after")
+#q4:The vocabulary is not really smaller here because this is only one short text the real diffrence appears on a large text
+# it is not a good idea to remove them For sentiment analysis !!! and SOOOO good etc express emotions stronger then just a normal good, so removing them throws away signal so Better keep them
